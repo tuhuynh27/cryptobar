@@ -109,7 +109,7 @@ class StatusBarController: ObservableObject {
                     let priceChange = (cryptoData.priceChangePercent as NSString).floatValue
                     let changeSymbol = priceChange < 0 ? "↓" : "↑"
                     let changePrice = String(format: "%.2f", abs(priceChange))
-                    self.statusItem?.button?.title = "\(self.selectedCrypto) \(self.cryptoPrice)\(changeSymbol) \(changePrice)%"
+                    self.statusItem?.button?.title = "\(self.selectedCrypto) \(self.cryptoPrice)\(changeSymbol) \(priceChange < 0 ? "-" : "+")\(changePrice)%"
                 }
             }
         }.resume()
