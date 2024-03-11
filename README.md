@@ -7,7 +7,6 @@ CryptoBar is a macOS application designed to conveniently display real-time upda
 - **BTC Price Updates:** Stay informed with the latest BTC price updates directly in your macOS status bar.
 - **Real-Time Data:** Access real-time data to keep track of market fluctuations effortlessly.
 - **Minimalist Design:** Designed with a minimalist interface, CryptoBar seamlessly integrates into your macOS environment.
-- **SwiftUI Powered:** Leveraging the power of SwiftUI for a modern and responsive user experience.
 
 ### How to Use:
 
