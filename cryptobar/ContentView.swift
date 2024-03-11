@@ -21,43 +21,83 @@ class StatusBarController: ObservableObject {
     }
 
     private var statusItem: NSStatusItem?
-    @Published var btcPrice: String = "Loading..."
-    private let binanceAPIURL = URL(string: "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT")!
-    private var timer: Timer?
+    @Published var cryptoPrice: String = "Loading..."
+    @Published var selectedCrypto: String = "BTC"
+    
+    // Default cryptocurrency
+    private var defaultCrypto = "BTC"
+    // Array to hold cryptocurrency options
+    private let cryptoOptions = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "SHIB", "AVAX", "DOT", "LINK", "MATIC", "UNI", "NEAR", "PEPE", "FLOKI"]
+    // Menu to display cryptocurrency options
+    private var cryptoMenu = NSMenu()
 
+    private let binanceAPIURLBase = "https://api.binance.com/api/v3/ticker/24hr?symbol="
+    private var timer: Timer?
+    
     private init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem?.button?.title = "BTC \(btcPrice)"
+        statusItem?.button?.title = "\(selectedCrypto) \(cryptoPrice)"
+        
+        // Create an NSMenuItem for the text you want to display
+        let textMenuItem = NSMenuItem(title: "Select a coin pair", action: nil, keyEquivalent: "")
+        textMenuItem.isEnabled = false // Ensures the text item is not selectable
+        cryptoMenu.addItem(textMenuItem)
+        
+        // Populate menu with cryptocurrency options
+        for option in cryptoOptions {
+            let menuItem = NSMenuItem(title: "\(option)/USDT", action: #selector(selectCrypto(_:)), keyEquivalent: option)
+            menuItem.target = self
+            cryptoMenu.addItem(menuItem)
+        }
+        
+        // Set menu for status item
+        statusItem?.menu = cryptoMenu
+    }
+    
+    // Function to handle selection of cryptocurrency from the menu
+    @objc private func selectCrypto(_ sender: NSMenuItem) {
+        selectedCrypto = sender.keyEquivalent
+        startUpdatingPrice()
     }
 
     func startUpdatingPrice() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+        // Invalidate the existing timer
+        timer?.invalidate()
+        
+        fetchData()
+        // Schedule a new timer
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             self.fetchData()
         }
-        timer?.fire() // Fetch data immediately upon starting the timer
     }
 
     private func fetchData() {
+        guard let cryptoSymbol = selectedCrypto.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+            return
+        }
+        guard let binanceAPIURL = URL(string: "\(binanceAPIURLBase)\(cryptoSymbol)USDT") else {
+            return
+        }
+        
         URLSession.shared.dataTask(with: binanceAPIURL) { data, response, error in
             guard let data = data else {
                 print("Error: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
-            if let btcData = try? JSONDecoder().decode(BTCData.self, from: data) {
+            if let cryptoData = try? JSONDecoder().decode(CryptoData.self, from: data) {
                 DispatchQueue.main.async {
-                    if let priceDouble = Double(btcData.lastPrice) {
-                        self.btcPrice = String(format: "%.2f", priceDouble)
+                    if let priceDouble = Double(cryptoData.lastPrice) {
+                        self.cryptoPrice = String(format: "%.2f", priceDouble)
                     }
-                    let priceChange = (btcData.priceChangePercent as NSString).floatValue
+                    let priceChange = (cryptoData.priceChangePercent as NSString).floatValue
                     let changeSymbol = priceChange < 0 ? "↓" : "↑"
                     let changePrice = String(format: "%.2f", abs(priceChange))
-                    self.statusItem?.button?.title = "₿TC \(self.btcPrice)\(changeSymbol) \(changePrice)%"
+                    self.statusItem?.button?.title = "\(self.selectedCrypto) \(self.cryptoPrice)\(changeSymbol) \(changePrice)%"
                 }
             }
         }.resume()
     }
 }
-
 
 struct BTCStatusBarView: NSViewRepresentable {
     typealias NSViewType = NSView
@@ -71,7 +111,7 @@ struct BTCStatusBarView: NSViewRepresentable {
     }
 }
 
-struct BTCData: Codable {
+struct CryptoData: Codable {
     let lastPrice: String
     let priceChangePercent: String
 
