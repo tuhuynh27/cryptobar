@@ -50,8 +50,17 @@ class StatusBarController: ObservableObject {
             cryptoMenu.addItem(menuItem)
         }
         
+        // Add Quit option
+        let quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quitApplication(_:)), keyEquivalent: "q")
+        quitMenuItem.target = self
+        cryptoMenu.addItem(quitMenuItem)
+        
         // Set menu for status item
         statusItem?.menu = cryptoMenu
+    }
+    
+    @objc private func quitApplication(_ sender: Any?) {
+        NSApplication.shared.terminate(self)
     }
     
     // Function to handle selection of cryptocurrency from the menu
@@ -87,11 +96,26 @@ class StatusBarController: ObservableObject {
             if let cryptoData = try? JSONDecoder().decode(CryptoData.self, from: data) {
                 DispatchQueue.main.async {
                     if let priceDouble = Double(cryptoData.lastPrice) {
-                        self.cryptoPrice = String(format: "%.2f", priceDouble)
+                        var formattedPrice: String
+                        if abs(priceDouble) >= 100 {
+                            formattedPrice = String(format: "%.2f", priceDouble)
+                        } else if abs(priceDouble) >= 0.01 {
+                            formattedPrice = String(format: "%.4f", priceDouble)
+                        } else {
+                            formattedPrice = String(format: "%.8f", priceDouble)
+                        }
+                        self.cryptoPrice = formattedPrice
                     }
                     let priceChange = (cryptoData.priceChangePercent as NSString).floatValue
                     let changeSymbol = priceChange < 0 ? "↓" : "↑"
-                    let changePrice = String(format: "%.2f", abs(priceChange))
+                    let changePrice: String
+                    if abs(priceChange) >= 100 {
+                        changePrice = String(format: "%.2f", abs(priceChange))
+                    } else if abs(priceChange) >= 0.01 {
+                        changePrice = String(format: "%.4f", abs(priceChange))
+                    } else {
+                        changePrice = String(format: "%.8f", abs(priceChange))
+                    }
                     self.statusItem?.button?.title = "\(self.selectedCrypto) \(self.cryptoPrice)\(changeSymbol) \(changePrice)%"
                 }
             }
