@@ -9,6 +9,7 @@ struct ContentView: View {
             .onAppear {
                 statusBarController.startUpdatingPrice()
             }
+            .accessibility(identifier: "btcPrice")
     }
 }
 
