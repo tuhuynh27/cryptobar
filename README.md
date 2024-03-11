@@ -18,7 +18,7 @@ CryptoBar is a macOS application designed to conveniently display real-time upda
 
 ### Build from source
 
-See [Build from source](BUILD.MD)
+See [Build from source](./BUILD.MD)
 
 ### Contribution:
 
