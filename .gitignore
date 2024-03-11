@@ -1,0 +1,24 @@
+# Xcode
+.DS_Store
+*.xcuserstate
+*.xcworkspace
+xcuserdata
+
+# Build products
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.xcarchive
+*.xcuserdata/
+
+# Dependencies
+Pods/
+Carthage/Build/
+
+# Swift Package Manager
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
