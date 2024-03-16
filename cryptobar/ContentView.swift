@@ -15,17 +15,17 @@ struct ContentView: View {
 
 class StatusBarController: ObservableObject {
     private static var sharedController: StatusBarController = StatusBarController()
+    private let binanceWebSocket = BinanceWebSocket()
     
     static var shared: StatusBarController {
         return sharedController
     }
 
     private var statusItem: NSStatusItem?
-    @Published var cryptoPrice: String = "Loading..."
-    @Published var selectedCrypto: String = "BTC"
+    var cryptoPrice: String = "Loading..."
+    var selectedCrypto: String = "BTC"
+    var priceChange: Float = 0
     
-    // Default cryptocurrency
-    private var defaultCrypto = "BTC"
     // Array to hold cryptocurrency options
     private let cryptoOptions = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "SHIB", "AVAX", "DOT", "LINK", "MATIC", "UNI", "NEAR", "PEPE", "FLOKI"]
     // Menu to display cryptocurrency options
@@ -34,7 +34,14 @@ class StatusBarController: ObservableObject {
     private let binanceAPIURLBase = "https://api.binance.com/api/v3/ticker/24hr?symbol="
     private var timer: Timer?
     
+    func updatePrice(newPrice: String) {
+        self.cryptoPrice = newPrice
+        self.renderPriceOnStatusBar()
+    }
+    
     private init() {
+        binanceWebSocket.setCallback(callback: updatePrice)
+        
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem?.button?.title = "\(selectedCrypto) \(cryptoPrice)"
         
@@ -50,6 +57,24 @@ class StatusBarController: ObservableObject {
             cryptoMenu.addItem(menuItem)
         }
         
+        // Add separator
+        let separator1MenuItem = NSMenuItem.separator()
+        cryptoMenu.addItem(separator1MenuItem)
+        
+        // Add "Visit CoinTrack" option
+        let visitCoinTrackMenuItem = NSMenuItem(title: "Open CoinTrack", action: #selector(visitCoinTrack(_:)), keyEquivalent: "")
+        visitCoinTrackMenuItem.target = self
+        cryptoMenu.addItem(visitCoinTrackMenuItem)
+        
+        // Add "About" option
+        let aboutMenuItem = NSMenuItem(title: "About", action: #selector(showAboutPopup(_:)), keyEquivalent: "")
+        aboutMenuItem.target = self
+        cryptoMenu.addItem(aboutMenuItem)
+        
+        // Add another separator
+        let separator2MenuItem = NSMenuItem.separator()
+        cryptoMenu.addItem(separator2MenuItem)
+        
         // Add Quit option
         let quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quitApplication(_:)), keyEquivalent: "q")
         quitMenuItem.target = self
@@ -58,7 +83,20 @@ class StatusBarController: ObservableObject {
         // Set menu for status item
         statusItem?.menu = cryptoMenu
     }
-    
+
+    @objc private func visitCoinTrack(_ sender: Any?) {
+        guard let url = URL(string: "https://cointrack.keva.dev") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc private func showAboutPopup(_ sender: Any?) {
+        let version = "Version 0.0.3"
+        let copyright = "© 2024 by Tu Huynh"
+        let alert = NSAlert()
+        alert.messageText = "\(version)\n\(copyright)"
+        alert.runModal()
+    }
+
     @objc private func quitApplication(_ sender: Any?) {
         NSApplication.shared.terminate(self)
     }
@@ -72,15 +110,41 @@ class StatusBarController: ObservableObject {
     func startUpdatingPrice() {
         // Invalidate the existing timer
         timer?.invalidate()
+        binanceWebSocket.cancelWebSocket()
+        binanceWebSocket.startWebSocket(for: self.selectedCrypto)
         
-        fetchData()
+        fetchDataViaHttpRequest()
         // Schedule a new timer
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            self.fetchData()
+        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+            self.fetchDataViaHttpRequest()
+        }
+    }
+    
+    private func renderPriceOnStatusBar() {
+        if let priceDouble = Double(self.cryptoPrice) {
+            var formattedPrice: String
+            if abs(priceDouble) >= 100 {
+                formattedPrice = String(format: "%.2f", priceDouble)
+            } else if abs(priceDouble) >= 0.01 {
+                formattedPrice = String(format: "%.4f", priceDouble)
+            } else {
+                formattedPrice = String(format: "%.8f", priceDouble)
+            }
+            
+            let changeSymbol = priceChange < 0 ? "↓" : "↑"
+            let changePrice = String(format: "%.2f", abs(priceChange))
+            
+            // Update UI on the main thread
+            DispatchQueue.main.async {
+                // Use a monospaced font
+                let buttonFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+                self.statusItem?.button?.font = buttonFont
+                self.statusItem?.button?.title = "\(self.selectedCrypto) \(formattedPrice)\(changeSymbol) \(self.priceChange < 0 ? "-" : "+")\(changePrice)%"
+            }
         }
     }
 
-    private func fetchData() {
+    private func fetchDataViaHttpRequest() {
         guard let cryptoSymbol = selectedCrypto.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
             return
         }
@@ -93,24 +157,11 @@ class StatusBarController: ObservableObject {
                 print("Error: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
+            
             if let cryptoData = try? JSONDecoder().decode(CryptoData.self, from: data) {
-                DispatchQueue.main.async {
-                    if let priceDouble = Double(cryptoData.lastPrice) {
-                        var formattedPrice: String
-                        if abs(priceDouble) >= 100 {
-                            formattedPrice = String(format: "%.2f", priceDouble)
-                        } else if abs(priceDouble) >= 0.01 {
-                            formattedPrice = String(format: "%.4f", priceDouble)
-                        } else {
-                            formattedPrice = String(format: "%.8f", priceDouble)
-                        }
-                        self.cryptoPrice = formattedPrice
-                    }
-                    let priceChange = (cryptoData.priceChangePercent as NSString).floatValue
-                    let changeSymbol = priceChange < 0 ? "↓" : "↑"
-                    let changePrice = String(format: "%.2f", abs(priceChange))
-                    self.statusItem?.button?.title = "\(self.selectedCrypto) \(self.cryptoPrice)\(changeSymbol) \(priceChange < 0 ? "-" : "+")\(changePrice)%"
-                }
+                self.cryptoPrice = cryptoData.lastPrice
+                self.priceChange = (cryptoData.priceChangePercent as NSString).floatValue
+                self.renderPriceOnStatusBar()
             }
         }.resume()
     }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		645453E12BA3FB41005541BB /* BinanceWebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645453E02BA3FB41005541BB /* BinanceWebSocket.swift */; };
 		DD5417552B9F09930005F9BA /* cryptobarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5417542B9F09930005F9BA /* cryptobarApp.swift */; };
 		DD5417572B9F09930005F9BA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5417562B9F09930005F9BA /* ContentView.swift */; };
 		DD5417592B9F09950005F9BA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD5417582B9F09950005F9BA /* Assets.xcassets */; };
@@ -35,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		645453E02BA3FB41005541BB /* BinanceWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinanceWebSocket.swift; sourceTree = "<group>"; };
 		DD5417512B9F09930005F9BA /* CryptoBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD5417542B9F09930005F9BA /* cryptobarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cryptobarApp.swift; sourceTree = "<group>"; };
 		DD5417562B9F09930005F9BA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 				DD54175D2B9F09950005F9BA /* cryptobar.entitlements */,
 				DD54175A2B9F09950005F9BA /* Preview Content */,
 				DD54177F2B9F25D00005F9BA /* AppDelegate.swift */,
+				645453E02BA3FB41005541BB /* BinanceWebSocket.swift */,
 			);
 			path = cryptobar;
 			sourceTree = "<group>";
@@ -262,6 +265,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				645453E12BA3FB41005541BB /* BinanceWebSocket.swift in Sources */,
 				DD5417802B9F25D00005F9BA /* AppDelegate.swift in Sources */,
 				DD5417572B9F09930005F9BA /* ContentView.swift in Sources */,
 				DD5417552B9F09930005F9BA /* cryptobarApp.swift in Sources */,
