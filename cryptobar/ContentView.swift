@@ -110,13 +110,15 @@ class StatusBarController: ObservableObject {
     func startUpdatingPrice() {
         // Invalidate the existing timer
         timer?.invalidate()
-        binanceWebSocket.cancelWebSocket()
-        binanceWebSocket.startWebSocket(for: self.selectedCrypto)
         
         fetchDataViaHttpRequest()
+        binanceWebSocket.cancelWebSocket()
+        binanceWebSocket.startWebSocket(for: self.selectedCrypto)
         // Schedule a new timer
-        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { _ in
             self.fetchDataViaHttpRequest()
+            self.binanceWebSocket.cancelWebSocket()
+            self.binanceWebSocket.startWebSocket(for: self.selectedCrypto)
         }
     }
     

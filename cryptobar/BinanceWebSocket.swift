@@ -6,19 +6,14 @@ class BinanceWebSocket {
     private var task: URLSessionWebSocketTask?
     private var coin: String = ""
     private var updatePriceCallback: PriceUpdateCallback?
-    private var isConnected: Bool = false // Flag to track if WebSocket is connected
-
+    
     func setCallback(callback: @escaping PriceUpdateCallback) {
         self.updatePriceCallback = callback
     }
     
     func startWebSocket(for coin: String) {
         self.coin = coin.lowercased()
-        if !isConnected {
-            connect()
-        } else {
-            print("WebSocket is already connected.")
-        }
+        connect()
     }
 
     private func connect() {
@@ -38,7 +33,6 @@ class BinanceWebSocket {
 
         task = session.webSocketTask(with: url)
         task?.resume()
-        isConnected = true // Set connected flag to true
         handleIncomingMessage()
     }
 
@@ -52,7 +46,6 @@ class BinanceWebSocket {
         case .suspended, .running:
             task.cancel(with: .goingAway, reason: nil)
             self.task = nil
-            isConnected = false // Reset connected flag to false
             print("WebSocket task cancelled.")
         case .canceling, .completed:
             print("WebSocket task is already cancelling or completed.")
@@ -60,6 +53,7 @@ class BinanceWebSocket {
             print("Unknown task state.")
         }
     }
+
 
     private func handleIncomingMessage() {
         task?.receive { [weak self] result in
